@@ -140,8 +140,10 @@ if sure == 'n':
     sys.exit(0)
 
 bar = Bar('w00t w00t', max=int(loop))
-for until in range(0, int(loop)):
 
+
+def func():
+    global bar, PRESENTER_ID, PRESENTER_QUESTION
     headers = {
         "origin": "https://menti.com",
         "referer": TARGET,
@@ -150,44 +152,55 @@ for until in range(0, int(loop)):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"
     }
 
-    getIdentifier = requests.post("https://www.menti.com/core/identifiers", json={}, headers=headers)
+    getIdentifier = requests.post(
+        "https://www.menti.com/core/identifiers", json={}, headers=headers)
 
     if getIdentifier.status_code != 200:
         print(f"{getIdentifier.status_code} yo I can't get the Identifier (⊙_⊙)")
         print(getIdentifier.text)
-        break
+        return
 
     headers['x-identifier'] = getIdentifier.json()['identifier']
-    
+
     if IS_CUSTOM_VOTE:
         PRESENTER_ID = CUSTOM
 
     DATA = {
         'question_type': QUESTIONS[PRESENTER_ID]['type'],
         'vote': choice
-    } 
+    }
 
     if QUESTIONS[PRESENTER_ID]['type'] == "ranking":
         DATA['vote'] = [int(choice)]
 
-    if QUESTIONS[PRESENTER_ID]['type'] in ["scales", "prioritisation"] :
+    if QUESTIONS[PRESENTER_ID]['type'] in ["scales", "prioritisation"]:
         DATA['vote'] = value
 
     if QUESTIONS[PRESENTER_ID]['type'] == "rating":
-        values={c['id']: [0,0] for c in PRESENTER_QUESTION['choices']}
+        values = {c['id']: [0, 0] for c in PRESENTER_QUESTION['choices']}
         values[int(choice)] = value
         DATA['vote'] = values
 
     if QUESTIONS[PRESENTER_ID]['type'] == "qfa":
-        vote = requests.post(f"https://www.menti.com/core/qfa/{choice}/upvote", headers=headers, json={})
+        vote = requests.post(
+            f"https://www.menti.com/core/qfa/{choice}/upvote", headers=headers, json={})
     else:
-        vote = requests.post(f"https://www.menti.com/core/votes/{PRESENTER_ID}", headers=headers, json=DATA)
+        vote = requests.post(
+            f"https://www.menti.com/core/votes/{PRESENTER_ID}", headers=headers, json=DATA)
 
     if vote.status_code not in [201, 200]:
-        print(f"{vote.status_code} HAHAHAHAHA LOOKS LIKE ERROR, LOOKS WHAT YOU DID ┐('～`;)┌")
+        print(
+            f"{vote.status_code} HAHAHAHAHA LOOKS LIKE ERROR, LOOKS WHAT YOU DID ┐('～`;)┌")
         print(vote.text)
-        break
-    
+        return
+
     bar.next()
+
+
+for until in range(0, int(loop)):
+
+    thread = Thread(target=func)
+    sleep(0.1 + random() * 1.1)
+    thread.start()
 bar.finish()
 
